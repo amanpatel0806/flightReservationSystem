@@ -63,8 +63,16 @@ public class DatabaseManager {
                     "last_name TEXT NOT NULL," +
                     "email TEXT UNIQUE NOT NULL," +
                     "phone TEXT," +
-                    "address TEXT)";
+                    "address TEXT," +
+                    "username TEXT)";
             stmt.execute(createCustomerTable);
+            
+            // Add username column to existing customers table if it doesn't exist
+            try {
+                stmt.execute("ALTER TABLE customers ADD COLUMN username TEXT");
+            } catch (SQLException e) {
+                // Column already exists, ignore
+            }
             
             // Create aircraft table
             String createAircraftTable = "CREATE TABLE IF NOT EXISTS aircraft (" +
@@ -111,6 +119,27 @@ public class DatabaseManager {
                     "status TEXT NOT NULL," +
                     "FOREIGN KEY (reservation_id) REFERENCES reservations(id))";
             stmt.execute(createPaymentTable);
+            
+            // Create promotions table
+            String createPromotionTable = "CREATE TABLE IF NOT EXISTS promotions (" +
+                    "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    "code TEXT UNIQUE NOT NULL," +
+                    "description TEXT NOT NULL," +
+                    "discount_percentage REAL NOT NULL," +
+                    "start_date TEXT NOT NULL," +
+                    "end_date TEXT NOT NULL," +
+                    "is_active INTEGER NOT NULL DEFAULT 1)";
+            stmt.execute(createPromotionTable);
+            
+            // Create booking_add_ons table
+            String createBookingAddOnTable = "CREATE TABLE IF NOT EXISTS booking_add_ons (" +
+                    "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    "reservation_id INTEGER NOT NULL," +
+                    "add_on_type TEXT NOT NULL," +
+                    "price REAL NOT NULL," +
+                    "quantity INTEGER NOT NULL," +
+                    "FOREIGN KEY (reservation_id) REFERENCES reservations(id))";
+            stmt.execute(createBookingAddOnTable);
             
             // Note: stmt is automatically closed due to try-with-resources
         } catch (SQLException e) {

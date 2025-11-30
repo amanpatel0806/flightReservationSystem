@@ -14,8 +14,10 @@ public class MainMenuView extends JFrame {
     private JButton searchFlightButton;
     private JButton bookFlightButton;
     private JButton manageReservationsButton;
+    private JButton monthlyPromotionsButton;
     private JButton customerManagementButton;
     private JButton flightManagementButton;
+    private JButton promotionManagementButton;
     private JButton logoutButton;
     private JPanel sidebarPanel;
     private JPanel contentPanel;
@@ -38,8 +40,10 @@ public class MainMenuView extends JFrame {
         searchFlightButton = createStyledButton("Search Flights", new Color(70, 130, 180));
         bookFlightButton = createStyledButton("Book Flight", new Color(70, 130, 180));
         manageReservationsButton = createStyledButton("Manage Reservations", new Color(70, 130, 180));
+        monthlyPromotionsButton = createStyledButton("Monthly Promotions", new Color(70, 130, 180));
         customerManagementButton = createStyledButton("Customer Management", new Color(70, 130, 180));
         flightManagementButton = createStyledButton("Flight Management", new Color(70, 130, 180));
+        promotionManagementButton = createStyledButton("Promotion Management", new Color(70, 130, 180));
         logoutButton = createStyledButton("Logout", new Color(220, 80, 80));
         
         // Create panels
@@ -141,12 +145,18 @@ public class MainMenuView extends JFrame {
         sidebarPanel.add(manageReservationsButton, gbc);
         
         gbc.gridy = 4;
-        sidebarPanel.add(customerManagementButton, gbc);
+        sidebarPanel.add(monthlyPromotionsButton, gbc);
         
         gbc.gridy = 5;
-        sidebarPanel.add(flightManagementButton, gbc);
+        sidebarPanel.add(customerManagementButton, gbc);
         
         gbc.gridy = 6;
+        sidebarPanel.add(flightManagementButton, gbc);
+        
+        gbc.gridy = 7;
+        sidebarPanel.add(promotionManagementButton, gbc);
+        
+        gbc.gridy = 8;
         gbc.weighty = 1; // Push logout button to bottom
         gbc.anchor = GridBagConstraints.SOUTH;
         sidebarPanel.add(logoutButton, gbc);
@@ -216,6 +226,13 @@ public class MainMenuView extends JFrame {
             }
         });
 
+        monthlyPromotionsButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                openMonthlyPromotionsView();
+            }
+        });
+
         customerManagementButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -227,6 +244,13 @@ public class MainMenuView extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 openAdminFlightManagementView();
+            }
+        });
+
+        promotionManagementButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                openPromotionManagementView();
             }
         });
 
@@ -253,19 +277,29 @@ public class MainMenuView extends JFrame {
                 // Hide admin-only buttons for customers
                 customerManagementButton.setVisible(false);
                 flightManagementButton.setVisible(false);
+                promotionManagementButton.setVisible(false);
+                // Show monthly promotions for customers
+                monthlyPromotionsButton.setVisible(true);
                 break;
             case "AGENT":
                 // Hide admin-only button for agents
                 flightManagementButton.setVisible(false);
+                // Show promotion management for agents
+                promotionManagementButton.setVisible(true);
+                monthlyPromotionsButton.setVisible(false);
                 break;
             case "ADMIN":
                 // All buttons visible for admin
+                promotionManagementButton.setVisible(true);
+                monthlyPromotionsButton.setVisible(false);
                 break;
             default:
                 // Hide admin-only buttons for unknown roles
                 customerManagementButton.setVisible(false);
                 flightManagementButton.setVisible(false);
                 manageReservationsButton.setVisible(false);
+                promotionManagementButton.setVisible(false);
+                monthlyPromotionsButton.setVisible(false);
                 break;
         }
         
@@ -292,6 +326,16 @@ public class MainMenuView extends JFrame {
     private void openAdminFlightManagementView() {
         dispose();
         new AdminFlightManagementView(currentUser);
+    }
+
+    private void openMonthlyPromotionsView() {
+        dispose();
+        new MonthlyPromotionsView(currentUser);
+    }
+
+    private void openPromotionManagementView() {
+        dispose();
+        new PromotionManagementView(currentUser);
     }
 
     private void logout() {

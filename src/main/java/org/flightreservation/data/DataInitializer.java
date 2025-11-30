@@ -11,6 +11,7 @@ public class DataInitializer {
         CustomerDAO customerDAO = new CustomerDAO();
         AircraftDAO aircraftDAO = new AircraftDAO();
         FlightDAO flightDAO = new FlightDAO();
+        PromotionDAO promotionDAO = new PromotionDAO();
         
         // Check if data already exists
         if (!userDAO.findAll().isEmpty()) {
@@ -26,12 +27,16 @@ public class DataInitializer {
         userDAO.save(agent);
         userDAO.save(customer);
         
-        // Create sample customers
-        Customer cust1 = new Customer("John", "Doe", "john.doe@email.com", "123-456-7890", "123 Main St, City");
-        Customer cust2 = new Customer("Jane", "Smith", "jane.smith@email.com", "098-765-4321", "456 Oak Ave, Town");
+        // Create sample customers with username links
+        Customer cust1 = new Customer("John", "Doe", "john.doe@email.com", "123-456-7890", "123 Main St, City", "john.doe");
+        Customer cust2 = new Customer("Jane", "Smith", "jane.smith@email.com", "098-765-4321", "456 Oak Ave, Town", "jane.smith");
         
         customerDAO.save(cust1);
         customerDAO.save(cust2);
+        
+        // Create additional user for cust2
+        User customer2 = new User("jane.smith", "customer123", "CUSTOMER");
+        userDAO.save(customer2);
         
         // Create sample aircraft
         Aircraft aircraft1 = new Aircraft("Boeing 737", 180, "American Airlines");
@@ -62,6 +67,11 @@ public class DataInitializer {
             LocalDateTime.now().plusDays(4).withHour(16).withMinute(0), 
             LocalDateTime.now().plusDays(4).withHour(18).withMinute(30), 
             179.99, 1, 180);
+
+        Promotion promo1 = new Promotion("SUMMER23", "Summer Sale 2023", 15.0,
+            LocalDateTime.now().minusDays(10), LocalDateTime.now().plusDays(20), true);
+
+        promotionDAO.save(promo1);
             
         flightDAO.save(flight1);
         flightDAO.save(flight2);

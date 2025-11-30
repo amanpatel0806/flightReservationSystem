@@ -7,6 +7,7 @@ public class Customer {
     private String email;
     private String phone;
     private String address;
+    private String username; // Link to User account
 
     public Customer() {}
 
@@ -25,6 +26,25 @@ public class Customer {
         this.email = email;
         this.phone = phone;
         this.address = address;
+    }
+
+    public Customer(int id, String firstName, String lastName, String email, String phone, String address, String username) {
+        this.id = id;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+        this.phone = phone;
+        this.address = address;
+        this.username = username;
+    }
+
+    public Customer(String firstName, String lastName, String email, String phone, String address, String username) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+        this.phone = phone;
+        this.address = address;
+        this.username = username;
     }
 
     // Getters and Setters
@@ -76,6 +96,14 @@ public class Customer {
         this.address = address;
     }
 
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
     @Override
     public String toString() {
         return "Customer{" +
@@ -85,6 +113,7 @@ public class Customer {
                 ", email='" + email + '\'' +
                 ", phone='" + phone + '\'' +
                 ", address='" + address + '\'' +
+                ", username='" + username + '\'' +
                 '}';
     }
 }

@@ -26,13 +26,7 @@ public class CustomerDAO {
                 pstmt.setInt(1, id);
                 ResultSet rs = pstmt.executeQuery();
                 if (rs.next()) {
-                    Customer customer = new Customer();
-                    customer.setId(rs.getInt("id"));
-                    customer.setFirstName(rs.getString("first_name"));
-                    customer.setLastName(rs.getString("last_name"));
-                    customer.setEmail(rs.getString("email"));
-                    customer.setPhone(rs.getString("phone"));
-                    customer.setAddress(rs.getString("address"));
+                    Customer customer = mapResultSetToCustomer(rs);
                     return customer;
                 }
             }
@@ -55,13 +49,7 @@ public class CustomerDAO {
                 pstmt.setString(1, email);
                 ResultSet rs = pstmt.executeQuery();
                 if (rs.next()) {
-                    Customer customer = new Customer();
-                    customer.setId(rs.getInt("id"));
-                    customer.setFirstName(rs.getString("first_name"));
-                    customer.setLastName(rs.getString("last_name"));
-                    customer.setEmail(rs.getString("email"));
-                    customer.setPhone(rs.getString("phone"));
-                    customer.setAddress(rs.getString("address"));
+                    Customer customer = mapResultSetToCustomer(rs);
                     return customer;
                 }
             }
@@ -71,8 +59,30 @@ public class CustomerDAO {
         return null;
     }
 
+    public Customer findByUsername(String username) {
+        String sql = "SELECT * FROM customers WHERE username = ?";
+        try (Connection conn = dbManager.getConnection()) {
+            // Check if connection is valid
+            if (conn == null) {
+                System.err.println("Failed to get database connection");
+                return null;
+            }
+            
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setString(1, username);
+                ResultSet rs = pstmt.executeQuery();
+                if (rs.next()) {
+                    return mapResultSetToCustomer(rs);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     public boolean save(Customer customer) {
-        String sql = "INSERT INTO customers (first_name, last_name, email, phone, address) VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO customers (first_name, last_name, email, phone, address, username) VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection conn = dbManager.getConnection()) {
             // Check if connection is valid
             if (conn == null) {
@@ -80,13 +90,21 @@ public class CustomerDAO {
                 return false;
             }
             
-            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            try (PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
                 pstmt.setString(1, customer.getFirstName());
                 pstmt.setString(2, customer.getLastName());
                 pstmt.setString(3, customer.getEmail());
                 pstmt.setString(4, customer.getPhone());
                 pstmt.setString(5, customer.getAddress());
+                pstmt.setString(6, customer.getUsername());
                 pstmt.executeUpdate();
+                
+                // Get the generated ID
+                try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        customer.setId(generatedKeys.getInt(1));
+                    }
+                }
                 return true;
             }
         } catch (SQLException e) {
@@ -108,14 +126,7 @@ public class CustomerDAO {
             try (Statement stmt = conn.createStatement();
                  ResultSet rs = stmt.executeQuery(sql)) {
                 while (rs.next()) {
-                    Customer customer = new Customer();
-                    customer.setId(rs.getInt("id"));
-                    customer.setFirstName(rs.getString("first_name"));
-                    customer.setLastName(rs.getString("last_name"));
-                    customer.setEmail(rs.getString("email"));
-                    customer.setPhone(rs.getString("phone"));
-                    customer.setAddress(rs.getString("address"));
-                    customers.add(customer);
+                    customers.add(mapResultSetToCustomer(rs));
                 }
             }
         } catch (SQLException e) {
@@ -125,7 +136,7 @@ public class CustomerDAO {
     }
 
     public boolean update(Customer customer) {
-        String sql = "UPDATE customers SET first_name = ?, last_name = ?, email = ?, phone = ?, address = ? WHERE id = ?";
+        String sql = "UPDATE customers SET first_name = ?, last_name = ?, email = ?, phone = ?, address = ?, username = ? WHERE id = ?";
         try (Connection conn = dbManager.getConnection()) {
             // Check if connection is valid
             if (conn == null) {
@@ -139,7 +150,8 @@ public class CustomerDAO {
                 pstmt.setString(3, customer.getEmail());
                 pstmt.setString(4, customer.getPhone());
                 pstmt.setString(5, customer.getAddress());
-                pstmt.setInt(6, customer.getId());
+                pstmt.setString(6, customer.getUsername());
+                pstmt.setInt(7, customer.getId());
                 pstmt.executeUpdate();
                 return true;
             }
@@ -147,6 +159,18 @@ public class CustomerDAO {
             e.printStackTrace();
             return false;
         }
+    }
+
+    private Customer mapResultSetToCustomer(ResultSet rs) throws SQLException {
+        Customer customer = new Customer();
+        customer.setId(rs.getInt("id"));
+        customer.setFirstName(rs.getString("first_name"));
+        customer.setLastName(rs.getString("last_name"));
+        customer.setEmail(rs.getString("email"));
+        customer.setPhone(rs.getString("phone"));
+        customer.setAddress(rs.getString("address"));
+        customer.setUsername(rs.getString("username"));
+        return customer;
     }
 
     public boolean delete(int id) {

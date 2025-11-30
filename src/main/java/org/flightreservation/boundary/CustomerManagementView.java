@@ -370,22 +370,38 @@ public class CustomerManagementView extends JFrame {
             return;
         }
         
+        // Validate email format
+        if (!isValidEmail(email)) {
+            JOptionPane.showMessageDialog(this, "Please enter a valid email address.\nExample: user@example.com", "Validation Error", JOptionPane.ERROR_MESSAGE);
+            emailField.requestFocus();
+            return;
+        }
+        
+        // Validate phone number format (if provided)
+        if (!phone.isEmpty() && !isValidPhoneNumber(phone)) {
+            JOptionPane.showMessageDialog(this, "Please enter a valid phone number.\nFormat: (123) 456-7890 or 123-456-7890 or 1234567890", "Validation Error", JOptionPane.ERROR_MESSAGE);
+            phoneField.requestFocus();
+            return;
+        }
+        
         if (editingCustomerId == -1) {
             // Adding new customer
-            Customer customer = new Customer(firstName, lastName, email, phone, address);
+            // Automatically generate username from firstname.lastname
+            String username = firstName.toLowerCase() + "." + lastName.toLowerCase();
+            
+            // Check if user already exists and create with unique username if needed
+            int counter = 1;
+            String originalUsername = username;
+            while (userDAO.findByUsername(username) != null) {
+                username = originalUsername + counter;
+                counter++;
+            }
+            
+            // Create customer with username link
+            Customer customer = new Customer(firstName, lastName, email, phone, address, username);
             if (customerController.addCustomer(customer)) {
                 // Automatically create a user account for the customer
-                String username = firstName.toLowerCase() + "." + lastName.toLowerCase();
                 User user = new User(username, "123", "CUSTOMER"); // Default password is "123"
-                
-                // Check if user already exists and create with unique username if needed
-                int counter = 1;
-                String originalUsername = username;
-                while (userDAO.findByUsername(username) != null) {
-                    username = originalUsername + counter;
-                    counter++;
-                }
-                user.setUsername(username);
                 
                 if (authController.registerUser(user)) {
                     JOptionPane.showMessageDialog(this, "Customer added successfully. User account created with username: " + username + " and default password: 123");
@@ -399,8 +415,15 @@ public class CustomerManagementView extends JFrame {
                 JOptionPane.showMessageDialog(this, "Failed to add customer.", "Error", JOptionPane.ERROR_MESSAGE);
             }
         } else {
-            // Updating existing customer
-            Customer customer = new Customer(editingCustomerId, firstName, lastName, email, phone, address);
+            // Updating existing customer - preserve username
+            Customer existingCustomer = customerController.getCustomerById(editingCustomerId);
+            if (existingCustomer == null) {
+                JOptionPane.showMessageDialog(this, "Customer not found.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            
+            // Preserve the username when updating
+            Customer customer = new Customer(editingCustomerId, firstName, lastName, email, phone, address, existingCustomer.getUsername());
             if (customerController.updateCustomer(customer)) {
                 JOptionPane.showMessageDialog(this, "Customer updated successfully.");
                 refreshCustomers();
@@ -415,6 +438,37 @@ public class CustomerManagementView extends JFrame {
     private void cancelEditing() {
         clearForm();
         editingCustomerId = -1;
+    }
+    
+    private boolean isValidEmail(String email) {
+        if (email == null || email.isEmpty()) {
+            return false;
+        }
+        
+        // Basic email validation pattern
+        // Format: local@domain
+        // Local part: alphanumeric, dots, hyphens, underscores
+        // Domain: alphanumeric, dots, hyphens
+        String emailPattern = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
+        return email.matches(emailPattern);
+    }
+    
+    private boolean isValidPhoneNumber(String phone) {
+        if (phone == null || phone.isEmpty()) {
+            return true; // Phone is optional, so empty is valid
+        }
+        
+        // Remove common phone number formatting characters
+        String cleanedPhone = phone.replaceAll("[\\s()\\-\\.]", "");
+        
+        // Check if it's all digits
+        if (!cleanedPhone.matches("\\d+")) {
+            return false;
+        }
+        
+        // Check length (should be 10 digits for US format, or 7-15 for international)
+        int length = cleanedPhone.length();
+        return length >= 7 && length <= 15;
     }
     
     private void clearForm() {

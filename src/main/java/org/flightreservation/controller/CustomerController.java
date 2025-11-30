@@ -28,6 +28,10 @@ public class CustomerController {
         return customerDAO.findByEmail(email);
     }
 
+    public Customer getCustomerByUsername(String username) {
+        return customerDAO.findByUsername(username);
+    }
+
     public List<Customer> getAllCustomers() {
         return customerDAO.findAll();
     }

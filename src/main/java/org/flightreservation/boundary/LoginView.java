@@ -14,6 +14,11 @@ public class LoginView extends JFrame {
     private JTextField usernameField;
     private JPasswordField passwordField;
     private JButton loginButton;
+    private JButton signUpButton;
+    private ButtonGroup roleButtonGroup;
+    private JRadioButton customerRadio;
+    private JRadioButton agentRadio;
+    private JRadioButton adminRadio;
     private AuthenticationController authController;
 
     public LoginView() {
@@ -45,7 +50,7 @@ public class LoginView extends JFrame {
         loginButton.setPreferredSize(new Dimension(100, 35));
         loginButton.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 14));
         loginButton.setBackground(new Color(70, 130, 180));
-        loginButton.setForeground(Color.BLACK);
+        loginButton.setForeground(Color.WHITE);
         loginButton.setFocusPainted(false);
         loginButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
         
@@ -59,6 +64,39 @@ public class LoginView extends JFrame {
                 loginButton.setBackground(new Color(70, 130, 180));
             }
         });
+        
+        // Sign Up button
+        signUpButton = new JButton("Sign Up");
+        signUpButton.setPreferredSize(new Dimension(100, 35));
+        signUpButton.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 14));
+        signUpButton.setBackground(new Color(60, 179, 113));
+        signUpButton.setForeground(new Color(70, 130, 180));
+        signUpButton.setFocusPainted(false);
+        signUpButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        
+        signUpButton.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                signUpButton.setBackground(new Color(80, 200, 120));
+            }
+
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                signUpButton.setBackground(new Color(60, 179, 113));
+            }
+        });
+        
+        // Role radio buttons
+        roleButtonGroup = new ButtonGroup();
+        customerRadio = new JRadioButton("Customer", true);
+        agentRadio = new JRadioButton("Agent");
+        adminRadio = new JRadioButton("Admin");
+        
+        customerRadio.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 12));
+        agentRadio.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 12));
+        adminRadio.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 12));
+        
+        roleButtonGroup.add(customerRadio);
+        roleButtonGroup.add(agentRadio);
+        roleButtonGroup.add(adminRadio);
     }
 
     private void setupLayout() {
@@ -102,7 +140,7 @@ public class LoginView extends JFrame {
         loginPanel.setBorder(
             BorderFactory.createLineBorder(new Color(70, 130, 180), 2));
         loginPanel.setBackground(Color.WHITE);
-        loginPanel.setPreferredSize(new Dimension(450, 250));
+        loginPanel.setPreferredSize(new Dimension(450, 350));
         
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(10, 15, 10, 15);
@@ -144,12 +182,35 @@ public class LoginView extends JFrame {
         gbc.anchor = GridBagConstraints.WEST;
         loginPanel.add(passwordField, gbc);
         
-        // Login button
+        // Role selection
         gbc.gridx = 0;
         gbc.gridy = 3;
+        gbc.anchor = GridBagConstraints.EAST;
+        JLabel roleLabel = new JLabel("Login As:");
+        roleLabel.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 14));
+        loginPanel.add(roleLabel, gbc);
+        
+        // Radio buttons panel
+        JPanel rolePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        rolePanel.setBackground(Color.WHITE);
+        rolePanel.add(customerRadio);
+        rolePanel.add(agentRadio);
+        rolePanel.add(adminRadio);
+        gbc.gridx = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        loginPanel.add(rolePanel, gbc);
+        
+        // Buttons panel
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
+        buttonPanel.setBackground(Color.WHITE);
+        buttonPanel.add(loginButton);
+        buttonPanel.add(signUpButton);
+        
+        gbc.gridx = 0;
+        gbc.gridy = 4;
         gbc.gridwidth = 2;
         gbc.anchor = GridBagConstraints.CENTER;
-        loginPanel.add(loginButton, gbc);
+        loginPanel.add(buttonPanel, gbc);
         
         mainPanel.add(loginPanel);
         add(mainPanel, BorderLayout.CENTER);
@@ -160,6 +221,13 @@ public class LoginView extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 login();
+            }
+        });
+        
+        signUpButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                openSignUpView();
             }
         });
 
@@ -184,10 +252,15 @@ public class LoginView extends JFrame {
         });
     }
     
+    private void openSignUpView() {
+        dispose();
+        new SignUpView();
+    }
+    
     private void setupWindowProperties() {
         setTitle("Flight Reservation System - Login");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(550, 350);
+        setSize(550, 450);
         setResizable(false);
         // Center the window
         setLocationRelativeTo(null);
@@ -198,6 +271,14 @@ public class LoginView extends JFrame {
     private void login() {
         String username = usernameField.getText().trim();
         String password = new String(passwordField.getPassword());
+        
+        // Get selected role
+        String selectedRole = "CUSTOMER";
+        if (agentRadio.isSelected()) {
+            selectedRole = "AGENT";
+        } else if (adminRadio.isSelected()) {
+            selectedRole = "ADMIN";
+        }
 
         if (username.isEmpty() || password.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Please enter both username and password.", "Error", JOptionPane.ERROR_MESSAGE);
@@ -206,6 +287,17 @@ public class LoginView extends JFrame {
 
         User user = authController.authenticate(username, password);
         if (user != null) {
+            // Check if user's role matches selected role
+            if (!user.getRole().equals(selectedRole)) {
+                JOptionPane.showMessageDialog(this, 
+                    "Invalid role. Please select the correct role for this account.", 
+                    "Role Mismatch", 
+                    JOptionPane.ERROR_MESSAGE);
+                passwordField.setText("");
+                usernameField.requestFocus();
+                return;
+            }
+            
             // Successful login
             dispose(); // Close login window
             // Open main menu

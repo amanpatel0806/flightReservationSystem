@@ -24,6 +24,14 @@ public class AuthenticationController {
         if (existingUser != null) {
             return false;
         }
+        // Only allow CUSTOMER role for registration
+        if (!"CUSTOMER".equals(user.getRole())) {
+            return false;
+        }
         return userDAO.save(user);
+    }
+    
+    public User getUserByUsername(String username) {
+        return userDAO.findByUsername(username);
     }
 }
